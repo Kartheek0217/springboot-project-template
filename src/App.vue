@@ -3,57 +3,47 @@
   <v-app>
     <Header @add-table="showAddTableDialog" @import-sql="importSQL" @import-dbml="importDBML" @export-sql="exportSQL"
       @export-dbml="exportDBML" @export-webp="exportWebP" @export-springboot="exportSpringBoot" />
-    <SideMenu :tables="tables" @select-table="editTable" />
-    <MainCanvas :tables="tables" />
-
-    <AddTableDialog v-model="showDialog" :table-to-edit="editingTable" @save="saveTable" />
+    <SideMenu />
+    <MainCanvas />
+    <AddTableDialog v-model="showDialog" :table-to-edit="selectedTable" @save="saveTable" />
   </v-app>
 </template>
 
 <style scoped></style>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useTablesStore } from '@/stores/tablesStore'
 import Header from '@/components/HeaderComponent.vue'
 import SideMenu from '@/components/SideMenu.vue'
 import MainCanvas from '@/components/MainCanvas.vue'
 import AddTableDialog from '@/components/AddTableDialog.vue'
 
-const tables = ref([])
+const tablesStore = useTablesStore()
+
 const showDialog = ref(false)
-const editingTable = ref(null)
+
+const selectedTable = computed(() => {
+  if (tablesStore.selectedTableId) {
+    return tablesStore.tables.find((t) => t.id === tablesStore.selectedTableId)
+  }
+  return null
+})
 
 function showAddTableDialog() {
-  editingTable.value = null
-  showDialog.value = true
-}
-
-function editTable(table) {
-  editingTable.value = table
+  tablesStore.setSelectedTable(null)
   showDialog.value = true
 }
 
 function saveTable(updatedTable) {
-  if (editingTable.value) {
-    // Find the table by its ID and update it
-    const index = tables.value.findIndex(t => t.id === updatedTable.id)
-    if (index !== -1) {
-      tables.value[index] = updatedTable
-    }
+  if (updatedTable.id) {
+    tablesStore.updateTable(updatedTable)
   } else {
-    // Add a new table with a unique ID and random position
-    const newTableWithCoords = {
-      ...updatedTable,
-      id: Date.now(),
-      x: Math.random() * 500 + 50,
-      y: Math.random() * 300 + 50
-    }
-    tables.value.push(newTableWithCoords)
+    tablesStore.addTable(updatedTable)
   }
+  tablesStore.setSelectedTable(null)
   showDialog.value = false
-  editingTable.value = null
 }
-
 
 function importSQL() {
   alert('Import from SQL not implemented yet.')

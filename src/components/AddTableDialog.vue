@@ -3,19 +3,19 @@
   <v-dialog v-model="dialog" max-width="600px">
     <v-card>
       <v-card-title>
-        <span class="headline">New Table</span>
+        <span class="headline">{{ editingMode ? 'Edit Table' : 'New Table' }}</span>
       </v-card-title>
       <v-card-text>
         <v-container>
           <v-row class="d-flex align-center">
             <v-col cols="12" sm="5">
-              <v-text-field label="Table Name" v-model="tableName" persistent></v-text-field>
+              <v-text-field label="Table Name" v-model="tableName"></v-text-field>
             </v-col>
             <v-col cols="12" sm="5">
-              <v-text-field label="Schema" v-model="schemaName" persistent></v-text-field>
+              <v-text-field label="Schema" v-model="schemaName"></v-text-field>
             </v-col>
             <v-col cols="12" sm="2">
-              <v-btn color="primary" @click="addField"><v-icon icon="mdi-plus-circle" /></v-btn>
+              <v-btn color="primary" @click="addField">ADD FIELD</v-btn>
             </v-col>
           </v-row>
         </v-container>
@@ -28,9 +28,9 @@
               <tr class="sticky-header">
                 <th>Name</th>
                 <th>Type</th>
-                <th class="text-center">Primary Key</th>
-                <th class="text-center">Not NULL</th>
-                <th class="text-center">Unique</th>
+                <th class="text-center">PK</th>
+                <th class="text-center">N.N.</th>
+                <th class="text-center">UQ</th>
                 <th class="text-center">Actions</th>
               </tr>
             </thead>
@@ -63,7 +63,7 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="blue darken-1" variant="text" @click="dialog = false">Cancel</v-btn>
+        <v-btn color="blue darken-1" variant="text" @click="closeDialog">Cancel</v-btn>
         <v-btn color="blue darken-1" variant="text" @click="saveTable">Save</v-btn>
       </v-card-actions>
     </v-card>
@@ -71,47 +71,71 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch } from 'vue'
 
 const props = defineProps({
-  modelValue: Boolean
-});
+  modelValue: Boolean,
+  tableToEdit: Object,
+})
 
-const emit = defineEmits(['update:modelValue', 'save']);
+const emit = defineEmits(['update:modelValue', 'save'])
 
-const dialog = ref(props.modelValue);
-const tableName = ref('new_table');
-const schemaName = ref('public');
-const fields = ref([
-  { name: 'id', type: 'bigint', pk: true, notNull: true, unique: false }
-]);
+const dialog = ref(props.modelValue)
+const editingMode = ref(false)
+const tableId = ref(null)
+const tableName = ref('')
+const schemaName = ref('')
+const fields = ref([])
+
+function initializeForm() {
+  if (props.tableToEdit) {
+    editingMode.value = true
+    tableId.value = props.tableToEdit.id
+    tableName.value = props.tableToEdit.name
+    schemaName.value = props.tableToEdit.schema
+    fields.value = JSON.parse(JSON.stringify(props.tableToEdit.fields))
+  } else {
+    editingMode.value = false
+    tableId.value = null
+    tableName.value = 'new_table'
+    schemaName.value = 'public'
+    fields.value = [{ name: 'id', type: 'bigint', pk: true, notNull: true, unique: false }]
+  }
+}
 
 watch(() => props.modelValue, (val) => {
-  dialog.value = val;
-});
+  dialog.value = val
+  if (val) {
+    initializeForm()
+  }
+})
 
 watch(dialog, (val) => {
   if (!val) {
-    emit('update:modelValue', false);
+    emit('update:modelValue', false)
   }
-});
+})
 
 function addField() {
-  fields.value.push({ name: '', type: '', pk: false, notNull: false, unique: false });
+  fields.value.push({ name: '', type: '', pk: false, notNull: false, unique: false })
 }
 
 function removeField(index) {
-  fields.value.splice(index, 1);
+  fields.value.splice(index, 1)
 }
 
 function saveTable() {
-  const newTable = {
+  const tableData = {
+    id: tableId.value,
     name: tableName.value,
     schema: schemaName.value,
-    fields: fields.value
-  };
-  emit('save', newTable);
-  dialog.value = false;
+    fields: fields.value,
+  }
+  emit('save', tableData)
+}
+
+function closeDialog() {
+  dialog.value = false
 }
 </script>
 
