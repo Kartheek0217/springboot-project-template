@@ -14,11 +14,12 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@mdi/font": "^7.4.47",
     "pinia": "^3.0.3",
     "vite-plugin-vuetify": "^2.1.2",
-    "vue": "^3.5.18",
+    "vue": "^3.5.19",
     "vue-router": "^4.5.1",
-    "vuetify": "^3.9.5"
+    "vuetify": "3.9"
   },
   "devDependencies": {
     "@eslint/js": "^9.31.0",
